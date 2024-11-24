@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Spencience Avatar Experience</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/phaser/3.70.0/phaser.min.js"></script>
+<style>
+        body {
+            margin: 0;
+            background: #0a0a2a;
+            color: #00ff9d;
+            font-family: 'Courier New', monospace;
+            overflow: hidden;
+        }
+        #game-container {
+            position: relative;
+            width: 100vw;
+            height: 100vh;
+        }
+        #hud {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            z-index: 100;
+        }
+        .consciousness-meter {
+            width: 200px;
+            height: 20px;
+            background: #001f3f;
+            border: 2px solid #00ff9d;
+            margin: 10px 0;
+        }
+        .consciousness-level {
+            width: 50%;
+            height: 100%;
+            background: #00ff9d;
+            transition: width 0.3s;
+        }
+    </style>
+</head>
+<body>
+<div id="game-container">
+<div id="hud">
+<h3>Consciousness Level</h3>
+<div class="consciousness-meter">
+<div class="consciousness-level"></div>
+</div>
+<div id="spence-balance">SPENCE: 0.000</div>
+</div>
+</div>
+<script>
+        const config = {
+            type: Phaser.WEBGL,
+            parent: 'game-container',
+            width: window.innerWidth,
+            height: window.innerHeight,
+            backgroundColor: '#0a0a2a',
+            physics: {
+                default: 'arcade',
+                arcade: {
+                    gravity: { y: 0 },
+                    debug: false
+                }
+            },
+            scene: {
+                preload: preload,
+                create: create,
+                update: update
+            }
+        };
+
+        const game = new Phaser.Game(config);
+        let avatar;
+        let consciousnessLevel = 50;
+        let spenceBalance = 0;
+
+        function preload() {
+            this.load.setBaseURL('https://spencience.com/assets/');
+            this.load.spritesheet('avatar', 'conscious_avatar.png', { 
+                frameWidth: 64, 
+                frameHeight: 64 
+            });
+        }
+
+        function create() {
+            avatar = this.add.sprite(
+                config.width / 2,
+                config.height / 2,
+                'avatar'
+            );
+
+            this.anims.create({
+                key: 'idle',
+                frames: this.anims.generateFrameNumbers('avatar', { 
+                    start: 0, 
+                    end: 5 
+                }),
+                frameRate: 10,
+                repeat: -1
+            });
+
+            avatar.play('idle');
+
+            this.input.keyboard.on('keydown', function(event) {
+                switch(event.code) {
+                    case 'Space':
+                        elevateConsciousness();
+                        break;
+                    case 'KeyM':
+                        mineSPENCE();
+                        break;
+                }
+            });
+
+            setInterval(updateConsciousness, 1000);
+        }
+
+        function update() {
+            const pointer = this.input.activePointer;
+            if (pointer.isDown) {
+                const angle = Phaser.Math.Angle.Between(
+                    avatar.x, avatar.y,
+                    pointer.x, pointer.y
+                );
+                avatar.rotation = angle;
+                
+                avatar.x += Math.cos(angle) * 4;
+                avatar.y += Math.sin(angle) * 4;
+            }
+        }
+
+        function elevateConsciousness() {
+            consciousnessLevel = Math.min(100, consciousnessLevel + 5);
+            updateConsciousnessDisplay();
+        }
+
+        function mineSPENCE() {
+            if (consciousnessLevel > 20) {
+                spenceBalance += 0.001;
+                consciousnessLevel -= 1;
+                updateConsciousnessDisplay();
+                document.getElementById('spence-balance').textContent = 
+                    `SPENCE: ${spenceBalance.toFixed(3)}`;
+            }
+        }
+
+        function updateConsciousness() {
+            consciousnessLevel = Math.max(0, consciousnessLevel - 0.5);
+            updateConsciousnessDisplay();
+        }
+
+        function updateConsciousnessDisplay() {
+            document.querySelector('.consciousness-level').style.width = 
+                `${consciousnessLevel}%`;
+        }
+
+        window.addEventListener('resize', () => {
+            game.scale.resize(window.innerWidth, window.innerHeight);
+        });
+    </script>
+</body>
+</html>
